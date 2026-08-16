@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kindred &mdash; Scam Containment</title>
+</head>
+<body>
+<style>
+  :root {
+    --bg: #FAFBFC;
+    --surface: #FFFFFF;
+    --surface-hover: #F4F6F8;
+    --border: #E8ECF0;
+    --border-subtle: #F0F2F5;
+    --ink: #0F172A;
+    --ink2: #475569;
+    --ink3: #94A3B8;
+    --accent: #0F766E;
+    --accent-soft: #F0FDFA;
+    --accent-border: #99F6E4;
+    --red: #DC2626;
+    --red-soft: #FEF2F2;
+    --red-border: #FECACA;
+    --amber: #D97706;
+    --amber-soft: #FFFBEB;
+    --amber-border: #FDE68A;
+    --green: #059669;
+    --green-soft: #ECFDF5;
+    --green-border: #A7F3D0;
+    --blue: #2563EB;
+    --blue-soft: #EFF6FF;
+    --rail-bg: #070D1A;
+    --side-bg: #0F172A;
+    --side-ink: rgba(255,255,255,0.5);
+    --side-ink-on: #FFFFFF;
+    --side-surface: rgba(255,255,255,0.06);
+    --side-border: rgba(255,255,255,0.08);
+    --font: system-ui, -apple-system, sans-serif;
+    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    --r: 10px; --shadow: 0 1px 3px rgba(0,0,0,0.04); --t: 0.2s ease;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0B1120;--surface:#141C2E;--surface-hover:#1E2D4A;--border:#1E293B;--border-subtle:#1A2332;--ink:#F1F5F9;--ink2:#94A3B8;--ink3:#64748B;--accent-soft:#042F2E;--accent-border:#115E59;--red-soft:#450A0A;--red-border:#7F1D1D;--amber-soft:#451A03;--amber-border:#78350F;--green-soft:#022C22;--green-border:#065F46;--blue-soft:#1E3A5F;--rail-bg:#050A14;--side-bg:#0A1020;--shadow:0 1px 3px rgba(0,0,0,0.3); }
+  }
+  :root[data-theme="dark"] { --bg:#0B1120;--surface:#141C2E;--surface-hover:#1E2D4A;--border:#1E293B;--border-subtle:#1A2332;--ink:#F1F5F9;--ink2:#94A3B8;--ink3:#64748B;--accent-soft:#042F2E;--accent-border:#115E59;--red-soft:#450A0A;--red-border:#7F1D1D;--amber-soft:#451A03;--amber-border:#78350F;--green-soft:#022C22;--green-border:#065F46;--blue-soft:#1E3A5F;--rail-bg:#050A14;--side-bg:#0A1020;--shadow:0 1px 3px rgba(0,0,0,0.3); }
+  :root[data-theme="light"] { --bg:#FAFBFC;--surface:#FFFFFF;--surface-hover:#F4F6F8;--border:#E8ECF0;--border-subtle:#F0F2F5;--ink:#0F172A;--ink2:#475569;--ink3:#94A3B8;--accent-soft:#F0FDFA;--accent-border:#99F6E4;--red-soft:#FEF2F2;--red-border:#FECACA;--amber-soft:#FFFBEB;--amber-border:#FDE68A;--green-soft:#ECFDF5;--green-border:#A7F3D0;--blue-soft:#EFF6FF;--rail-bg:#070D1A;--side-bg:#0F172A;--shadow:0 1px 3px rgba(0,0,0,0.04); }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:var(--font); background:var(--bg); color:var(--ink); font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased; }
+  .app { display:grid; grid-template-columns:56px 220px 1fr; min-height:100vh; }
+
+  /* Rail */
+  .rail { background:var(--rail-bg); display:flex; flex-direction:column; align-items:center; padding:16px 0; position:sticky; top:0; height:100vh; border-right:1px solid rgba(255,255,255,0.05); }
+  .rail-logo { width:32px; height:32px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; margin-bottom:20px; }
+  .rail-logo svg { width:16px; height:16px; }
+  .rail-nav { display:flex; flex-direction:column; gap:4px; padding:0 6px; }
+  .ri { width:44px; height:44px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; color:rgba(255,255,255,0.3); cursor:pointer; transition:all var(--t); position:relative; }
+  .ri:hover { background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.6); }
+  .ri.on { background:rgba(255,255,255,0.08); color:#fff; }
+  .ri.on::before { content:''; position:absolute; left:-6px; top:50%; transform:translateY(-50%); width:3px; height:16px; background:var(--accent); border-radius:0 2px 2px 0; }
+  .ri svg { width:16px; height:16px; }
+  .ri-label { font-size:7px; font-weight:600; letter-spacing:0.02em; line-height:1; }
+
+  /* Side */
+  .side { background:var(--side-bg); display:flex; flex-direction:column; position:sticky; top:0; height:100vh; overflow-y:auto; border-right:1px solid var(--side-border); }
+  .side-top { padding:22px 16px 16px; }
+  .side-top h1 { font-size:15px; font-weight:650; color:var(--side-ink-on); letter-spacing:-0.02em; }
+  .side-tag { font-size:9px; font-weight:600; color:var(--side-ink); letter-spacing:0.06em; text-transform:uppercase; margin-top:3px; }
+  .org-badge { margin:0 10px 14px; padding:7px 10px; background:rgba(255,255,255,0.04); border:1px solid var(--side-border); border-radius:5px; display:flex; align-items:center; gap:8px; font-size:11px; color:var(--side-ink-on); font-weight:500; }
+  .org-icon { width:22px; height:22px; background:rgba(255,255,255,0.08); border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .org-icon svg { width:12px; height:12px; color:var(--side-ink); }
+  .nav-label { font-size:9px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--side-ink); padding:0 6px; margin-bottom:4px; margin-left:10px; }
+  .steps { list-style:none; padding:0 10px; display:flex; flex-direction:column; gap:1px; }
+  .si { display:flex; align-items:center; gap:10px; padding:8px 8px; border-radius:6px; cursor:pointer; font-size:12px; font-weight:450; color:var(--side-ink); transition:all var(--t); position:relative; }
+  .si:hover { background:var(--side-surface); }
+  .si.on { background:var(--side-surface); color:var(--side-ink-on); }
+  .si.on::before { content:''; position:absolute; left:0; top:50%; transform:translateY(-50%); width:2px; height:16px; background:var(--accent); border-radius:0 2px 2px 0; }
+  .si.done { color:var(--accent); }
+  .sn { width:22px; height:22px; border-radius:50%; border:1.5px solid currentColor; display:flex; align-items:center; justify-content:center; font-family:var(--mono); font-size:10px; font-weight:600; flex-shrink:0; }
+  .si.on .sn, .si.done .sn { background:var(--accent); border-color:var(--accent); color:white; }
+  .side-foot { padding:12px 16px; border-top:1px solid var(--side-border); }
+  .side-foot .ref { font-family:var(--mono); font-size:9px; color:var(--side-ink); }
+  .side-foot .name { font-size:12px; color:var(--side-ink-on); font-weight:500; margin-top:2px; }
+  .side-foot .loss { font-family:var(--mono); font-size:12px; color:var(--red); font-weight:600; margin-top:1px; }
+  .rail-bot { margin-top:auto; padding:0 6px; }
+
+  /* Main */
+  .main { padding:36px 48px; overflow-y:auto; max-height:100vh; }
+  .screen { display:none; animation:up 0.25s ease; }
+  .screen.on { display:block; }
+  @keyframes up { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  h2 { font-size:22px; font-weight:650; letter-spacing:-0.025em; margin-bottom:4px; }
+  .sub { color:var(--ink2); font-size:13px; margin-bottom:28px; }
+
+  /* Chips */
+  .chip { font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px; display:inline-flex; align-items:center; gap:4px; }
+  .chip-red { background:var(--red-soft); color:var(--red); border:1px solid var(--red-border); }
+  .chip-amber { background:var(--amber-soft); color:var(--amber); border:1px solid var(--amber-border); }
+  .chip-green { background:var(--green-soft); color:var(--green); border:1px solid var(--green-border); }
+  .chip-accent { background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent-border); }
+  .cd { width:4px; height:4px; border-radius:50%; background:currentColor; }
+
+  /* Stats */
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:24px; }
+  .stats.tri-col { grid-template-columns:repeat(3,1fr); }
+  .stat { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px 16px; box-shadow:var(--shadow); }
+  .stat-l { font-size:10px; font-weight:500; color:var(--ink3); margin-bottom:4px; }
+  .stat-n { font-size:26px; font-weight:700; letter-spacing:-0.03em; font-variant-numeric:tabular-nums; }
+  .stat-n.red { color:var(--red); }
+  .stat-n.accent { color:var(--accent); }
+  .stat-n.green { color:var(--green); }
+  .stat-sub { font-size:10px; color:var(--ink3); margin-top:2px; }
+
+  /* Card */
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden; }
+  .card+.card { margin-top:10px; }
+  .card-h { padding:12px 16px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; transition:background var(--t); }
+  .card-h:hover { background:var(--surface-hover); }
+  .card-h h3 { font-size:13px; font-weight:600; letter-spacing:-0.005em; }
+  .card-b { padding:0 16px 14px; display:none; }
+  .card.open .card-b { display:block; }
+  .chevron { color:var(--ink3); transition:transform var(--t); width:16px; height:16px; flex-shrink:0; }
+  .card.open .chevron { transform:rotate(180deg); }
+
+  /* Data rows */
+  .dr { display:grid; grid-template-columns:100px 1fr; gap:6px 16px; font-size:12px; }
+  .dr dt { color:var(--ink3); font-weight:500; }
+  .dr dd { color:var(--ink); }
+  .dr dd.mono { font-family:var(--mono); font-size:11px; }
+  .dr dd.red { color:var(--red); font-weight:600; }
+  .dr dd.amber { color:var(--amber); font-weight:600; }
+
+  /* Pattern field */
+  .field { font-size:12px; line-height:1.6; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--ink); margin-top:8px; }
+  .field[contenteditable]:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+  .field-hint { font-size:10px; color:var(--ink3); margin-top:4px; font-style:italic; }
+
+  /* Source tag */
+  .src-tag { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:600; padding:1px 6px; border-radius:3px; margin-left:8px; letter-spacing:0.02em; }
+  .src-bank { color:var(--blue); background:var(--blue-soft); border:1px solid rgba(37,99,235,0.2); }
+  .src-trm { color:var(--accent); background:var(--accent-soft); border:1px solid var(--accent-border); }
+  .src-both { color:var(--amber); background:var(--amber-soft); border:1px solid var(--amber-border); }
+
+  /* Case list table */
+  .case-table { width:100%; border-collapse:separate; border-spacing:0; }
+  .case-table th { font-size:10px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase; color:var(--ink3); text-align:left; padding:8px 12px; border-bottom:1px solid var(--border); }
+  .case-table td { font-size:12px; padding:10px 12px; border-bottom:1px solid var(--border-subtle); vertical-align:middle; }
+  .case-table tr { cursor:pointer; transition:background var(--t); }
+  .case-table tbody tr:hover { background:var(--surface-hover); }
+  .case-name { font-weight:600; }
+  .case-loss { font-family:var(--mono); font-weight:600; }
+
+  /* Match row */
+  .match { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden; transition:opacity 0.3s, max-height 0.4s; }
+  .match+.match { margin-top:8px; }
+  .match.dismissed { opacity:0.4; pointer-events:none; }
+  .match.dismissed .match-row > div:not(.match-left) { visibility:hidden; }
+  .match.dismissed .match-row > svg { visibility:hidden; }
+  .match.dismissed .match-row::after { content:'Dismissed'; position:absolute; right:16px; font-size:10px; font-weight:600; color:var(--red); }
+  .match-row { padding:10px 16px; display:flex; align-items:center; gap:12px; cursor:pointer; transition:background var(--t); position:relative; }
+  .match-row:hover { background:var(--surface-hover); }
+  .match-left { display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+  .match-name { font-size:13px; font-weight:600; }
+  .match-amt { font-family:var(--mono); font-size:11px; color:var(--ink2); }
+  .triage { display:flex; gap:4px; }
+  .tri { font-family:var(--font); font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--ink2); cursor:pointer; transition:all var(--t); }
+  .tri:hover { background:var(--surface-hover); }
+  .tri.s-y { background:var(--green-soft); color:var(--green); border-color:var(--green-border); }
+  .tri.s-n { background:var(--red-soft); color:var(--red); border-color:var(--red-border); }
+  .match-detail { display:none; padding:0 16px 12px; }
+  .match.open .match-detail { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .match.open .chevron { transform:rotate(180deg); }
+  .ev-h { font-size:9px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:6px; }
+  .ev-h.g { color:var(--green); }
+  .ev-h.r { color:var(--amber); }
+  .ev-list { list-style:none; display:flex; flex-direction:column; gap:3px; }
+  .ev-list li { font-size:11px; color:var(--ink2); padding-left:10px; position:relative; line-height:1.4; }
+  .ev-list li::before { content:''; position:absolute; left:0; top:6px; width:3px; height:3px; border-radius:50%; }
+  .ev-for li::before { background:var(--green); }
+  .ev-ag li::before { background:var(--amber); }
+
+  /* Match feedback */
+  .match-feedback { grid-column:1/-1; padding-top:10px; border-top:1px solid var(--border-subtle); margin-top:4px; display:flex; align-items:center; gap:10px; }
+  .fb-label { font-size:11px; font-weight:600; color:var(--ink2); white-space:nowrap; }
+  .fb-btns { display:flex; gap:6px; }
+  .fb-note { font-family:var(--font); font-size:11px; flex:1; padding:6px 10px; border:1px solid var(--border); border-radius:5px; background:var(--bg); color:var(--ink); outline:none; transition:border-color var(--t); }
+  .fb-note:focus { border-color:var(--accent); }
+  .fb-note::placeholder { color:var(--ink3); }
+
+  /* Match compare button */
+  .compare-btn { font-family:var(--font); font-size:10px; font-weight:600; padding:3px 10px; border-radius:20px; border:1px solid var(--accent-border); background:var(--accent-soft); color:var(--accent); cursor:pointer; transition:all var(--t); white-space:nowrap; }
+  .compare-btn:hover { filter:brightness(0.95); }
+
+  /* Actions */
+  .act { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--border-subtle); align-items:center; }
+  .act:last-child { border-bottom:none; }
+  .act-bar { width:3px; min-height:36px; border-radius:2px; flex-shrink:0; }
+  .act-bar.p1 { background:var(--red); }
+  .act-bar.p2 { background:var(--amber); }
+  .act-body { flex:1; }
+  .act-t { font-size:13px; font-weight:600; }
+  .act-d { font-size:11px; color:var(--ink2); margin-top:1px; }
+
+  /* Impact box */
+  .impact { background:var(--accent-soft); border:1px solid var(--accent-border); border-radius:var(--r); padding:16px 20px; margin-bottom:24px; }
+  .impact-title { font-size:11px; font-weight:700; letter-spacing:0.04em; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  .impact-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+  .impact-val { font-size:20px; font-weight:700; color:var(--ink); letter-spacing:-0.02em; font-variant-numeric:tabular-nums; }
+  .impact-label { font-size:10px; color:var(--ink2); margin-top:1px; }
+
+  /* Feedback */
+  .feedback-bar { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:14px 16px; margin-top:16px; display:flex; align-items:center; gap:12px; }
+  .fb-icon { width:28px; height:28px; background:var(--accent-soft); border:1px solid var(--accent-border); border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .fb-icon svg { width:14px; height:14px; color:var(--accent); }
+  .fb-text { font-size:11px; color:var(--ink2); flex:1; }
+  .fb-text strong { color:var(--ink); font-weight:600; }
+
+  /* Network graph */
+  .net-wrap { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow); padding:16px; margin-bottom:24px; }
+  .net-title { font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink3); margin-bottom:8px; }
+  .net-canvas { width:100%; height:320px; display:block; }
+
+  /* Buttons */
+  .btn { font-family:var(--font); font-size:12px; font-weight:600; padding:8px 18px; border-radius:6px; border:none; cursor:pointer; transition:all var(--t); display:inline-flex; align-items:center; gap:6px; }
+  .btn-p { background:var(--accent); color:white; }
+  .btn-p:hover { filter:brightness(1.1); }
+  .btn-g { background:transparent; color:var(--ink2); border:1px solid var(--border); }
+  .btn-g:hover { background:var(--surface-hover); }
+  .btn-s { background:var(--green); color:white; }
+  .btn-s:hover { filter:brightness(1.1); }
+  .btn-red { background:var(--red); color:white; }
+  .btn-red:hover { filter:brightness(1.1); }
+  .btns { display:flex; gap:8px; margin-top:24px; }
+
+  .divider { height:1px; background:var(--border); margin:20px 0; }
+  .sec-label { font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink3); margin-bottom:10px; margin-top:24px; }
+  .sec-label:first-child { margin-top:0; }
+
+  /* Search animation */
+  .search-wrap { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:50vh; gap:24px; }
+  .search-ring { width:80px; height:80px; border-radius:50%; border:3px solid var(--border); border-top-color:var(--accent); animation:spin 1s linear infinite; display:flex; align-items:center; justify-content:center; }
+  .search-ring svg { width:28px; height:28px; color:var(--accent); animation:spin 1s linear infinite reverse; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .search-status { text-align:center; }
+  .search-status h2 { margin-bottom:8px; }
+  .search-steps { list-style:none; display:flex; flex-direction:column; gap:6px; width:340px; }
+  .search-step { display:flex; align-items:center; gap:10px; font-size:12px; color:var(--ink3); transition:color 0.3s; }
+  .search-step.active { color:var(--accent); font-weight:600; }
+  .search-step.done { color:var(--green); }
+  .search-step .ss-icon { width:18px; height:18px; border-radius:50%; border:1.5px solid currentColor; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:9px; }
+  .search-step.done .ss-icon { background:var(--green); border-color:var(--green); color:white; }
+  .search-step.active .ss-icon { border-color:var(--accent); }
+  .search-counter { font-family:var(--mono); font-size:11px; color:var(--ink3); margin-top:4px; }
+  .search-progress { width:340px; height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+  .search-progress-fill { height:100%; background:var(--accent); border-radius:2px; transition:width 0.3s ease; width:0%; }
+
+  /* Side-by-side comparison */
+  .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .compare-col { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow); padding:16px; }
+  .compare-col h3 { font-size:13px; font-weight:600; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .compare-section { margin-top:12px; }
+  .compare-section-title { font-size:9px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink3); margin-bottom:6px; }
+  .compare-highlight { background:var(--green-soft); border-left:2px solid var(--green); padding:4px 8px; margin:3px 0; font-size:11px; border-radius:0 4px 4px 0; }
+  .compare-diff { background:var(--amber-soft); border-left:2px solid var(--amber); padding:4px 8px; margin:3px 0; font-size:11px; border-radius:0 4px 4px 0; }
+  .compare-neutral { padding:4px 8px; margin:3px 0; font-size:11px; color:var(--ink2); }
+
+  /* Audit record */
+  .audit-record { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); box-shadow:var(--shadow); padding:16px; margin-top:16px; }
+  .audit-record h3 { font-size:13px; font-weight:600; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .audit-row { display:grid; grid-template-columns:120px 1fr; gap:4px 16px; font-size:11px; padding:4px 0; }
+  .audit-row dt { color:var(--ink3); font-weight:500; }
+  .audit-row dd { color:var(--ink); font-family:var(--mono); font-size:10px; }
+  .audit-badge { display:inline-flex; align-items:center; gap:4px; font-size:9px; font-weight:600; padding:2px 8px; border-radius:3px; background:var(--green-soft); color:var(--green); border:1px solid var(--green-border); }
+
+  /* No-match state */
+  .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 20px; text-align:center; }
+  .empty-icon { width:64px; height:64px; background:var(--surface); border:2px solid var(--border); border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
+  .empty-icon svg { width:28px; height:28px; color:var(--ink3); }
+  .empty-state h3 { font-size:16px; font-weight:600; margin-bottom:6px; }
+  .empty-state p { font-size:12px; color:var(--ink2); max-width:400px; }
+  .empty-detail { margin-top:20px; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:16px; text-align:left; width:100%; max-width:440px; }
+  .empty-detail h4 { font-size:11px; font-weight:700; color:var(--ink3); letter-spacing:0.04em; text-transform:uppercase; margin-bottom:8px; }
+
+  /* Hold action button */
+  .btn-hold { background:var(--red-soft); color:var(--red); border:1.5px solid var(--red-border); font-weight:700; letter-spacing:0.01em; }
+  .btn-hold:hover { background:var(--red); color:white; border-color:var(--red); }
+  .btn-hold svg { width:14px; height:14px; }
+  .btn-hold.held { background:var(--green-soft); color:var(--green); border-color:var(--green-border); pointer-events:none; }
+  .hold-divider { height:1px; background:var(--border); margin:14px 0; }
+
+  /* Confidence meter */
+  .conf-meter { display:flex; align-items:center; gap:10px; margin:12px 0; }
+  .conf-bar-wrap { flex:1; height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+  .conf-bar-fill { height:100%; border-radius:4px; transition:width 0.4s ease; }
+  .conf-label { font-family:var(--mono); font-size:12px; font-weight:700; min-width:36px; }
+  .conf-desc { font-size:11px; color:var(--ink2); margin-bottom:4px; }
+
+  /* Risk warning */
+  .risk-warning { background:var(--amber-soft); border:1px solid var(--amber-border); border-radius:var(--r); padding:12px 14px; margin:14px 0; display:flex; gap:10px; align-items:flex-start; }
+  .risk-warning svg { width:18px; height:18px; color:var(--amber); flex-shrink:0; margin-top:1px; }
+  .risk-warning-text { font-size:11px; line-height:1.5; color:var(--ink); }
+  .risk-warning-text strong { color:var(--amber); }
+
+  /* Hold justification */
+  .hold-justify { width:100%; min-height:60px; padding:8px 10px; font-family:var(--font); font-size:12px; border:1px solid var(--border); border-radius:6px; background:var(--bg); color:var(--ink); resize:vertical; outline:none; }
+  .hold-justify:focus { border-color:var(--accent); }
+  .hold-justify::placeholder { color:var(--ink3); }
+  .hold-field-label { font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:var(--ink3); margin-bottom:4px; }
+  .hold-confirm-check { display:flex; align-items:flex-start; gap:8px; margin:14px 0; font-size:11px; color:var(--ink2); cursor:pointer; }
+  .hold-confirm-check input { margin-top:2px; accent-color:var(--red); }
+
+  /* Escalation confirm overlay */
+  .escalation-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; z-index:100; animation:fadeIn 0.2s; }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  .escalation-modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.15); padding:24px; width:520px; max-width:90vw; max-height:85vh; overflow-y:auto; animation:modalUp 0.25s ease; }
+  @keyframes modalUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  .escalation-modal h3 { font-size:16px; font-weight:650; margin-bottom:4px; }
+  .escalation-modal .sub { margin-bottom:16px; }
+
+  @media (max-width:640px) {
+    .app { grid-template-columns:1fr; }
+    .rail,.side { display:none; }
+    .main { padding:20px 16px; }
+    .stats { grid-template-columns:1fr 1fr; }
+    .match.open .match-detail { grid-template-columns:1fr; }
+    .impact-grid { grid-template-columns:1fr; }
+    .compare-grid { grid-template-columns:1fr; }
+  }
+</style>
+
+<div class="app">
+  <div class="rail">
+    <div class="rail-logo"><svg viewBox="0 0 20 20" fill="none"><path d="M10 3L4 7v6l6 4 6-4V7l-6-4z" stroke="white" stroke-width="1.5" stroke-linejoin="round"/><circle cx="10" cy="10" r="2.5" stroke="white" stroke-width="1.5"/></svg></div>
+    <div class="rail-nav">
+      <div class="ri on" onclick="page('dash')"><svg viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="3" width="6" height="4" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="3" y="11" width="6" height="6" rx="1.5" stroke="currentColor" stroke-width="1.3"/><rect x="11" y="9" width="6" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/></svg><span class="ri-label">Home</span></div>
+      <div class="ri" onclick="page('cases')"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M4 10h12M4 14h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg><span class="ri-label">Cases</span></div>
+    </div>
+    <div class="rail-bot"></div>
+  </div>
+
+  <nav class="side">
+    <div class="side-top">
+      <h1>Kindred</h1>
+      <div class="side-tag">Scam Containment</div>
+    </div>
+    <div class="org-badge">
+      <div class="org-icon"><svg viewBox="0 0 16 16" fill="none"><rect x="2" y="4" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M5 4V3a3 3 0 016 0v1" stroke="currentColor" stroke-width="1.2"/></svg></div>
+      Pacific National Bank
+    </div>
+    <div id="sideNav"></div>
+    <div id="sideWorkflow" style="display:none;">
+      <div class="nav-label">Workflow</div>
+      <ul class="steps" id="wfSteps">
+        <li class="si on" onclick="go(0)"><span class="sn">1</span>Understand the case</li>
+        <li class="si" onclick="go(1)"><span class="sn">2</span>Find related activity</li>
+        <li class="si" onclick="go(2)"><span class="sn">3</span>Intervene</li>
+      </ul>
+      <div class="side-foot visible" id="sideFoot" style="margin:12px 10px 0;padding:10px;border-top:none;border:1px solid var(--side-border);border-radius:6px;">
+        <div style="font-size:9px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--side-ink);margin-bottom:4px;">Source case</div>
+        <div class="ref" id="sideRef">OP-2025-04172</div>
+        <div class="name" id="sideName">Margaret Chen</div>
+        <div class="loss" id="sideLoss">$85,000 lost</div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="screen on" id="pgDash">
+      <h2>Dashboard</h2>
+      <p class="sub">Kindred performance at Pacific National Bank. Last updated Mar 14, 2026.</p>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-l">Containment time</div><div class="stat-n green">18 → 4.2<span style="font-size:14px;color:var(--ink3);font-weight:500;"> days</span></div><div class="stat-sub">77% faster containment</div></div>
+        <div class="stat"><div class="stat-l">Estimated losses prevented</div><div class="stat-n green">$1.4M</div><div class="stat-sub">Across 4 operations this quarter</div></div>
+        <div class="stat"><div class="stat-l">Customers protected</div><div class="stat-n accent">38</div><div class="stat-sub">Reached before next deposit</div></div>
+        <div class="stat"><div class="stat-l">Active operations</div><div class="stat-n red">3</div><div class="stat-sub">1 urgent — next deposit projected in 8–10 days</div></div>
+      </div>
+
+      <div class="stats" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat"><div class="stat-l">Cases analyzed</div><div class="stat-n accent">2,847</div></div>
+        <div class="stat"><div class="stat-l">Match precision</div><div class="stat-n green">84%</div><div class="stat-sub">Confirmed as related by investigators</div></div>
+        <div class="stat"><div class="stat-l">Avg. connections per operation</div><div class="stat-n">6.2</div><div class="stat-sub">Victims found per confirmed case</div></div>
+      </div>
+
+      <div class="sec-label">Needs attention</div>
+      <div class="card open" onclick="openCase('margaret')" style="cursor:pointer;">
+        <div class="card-h">
+          <h3>OP-04172 <span class="chip chip-red" style="margin-left:8px;"><span class="cd"></span>Active</span></h3>
+          <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="card-b" style="display:block;">
+          <div class="dr">
+            <dt>Customers</dt><dd>4 identified so far</dd>
+            <dt>Total losses</dt><dd class="mono red">$347K</dd>
+            <dt>Source case</dt><dd>Margaret Chen (Carmen Reyes)</dd>
+            <dt>Urgent</dt><dd class="red">Susan Park — next deposit projected in 8–10 days</dd>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CASES LIST -->
+    <div class="screen" id="pgCases">
+      <h2>Cases</h2>
+      <p class="sub">Confirmed fraud cases at Pacific National Bank. Select a case to investigate with Kindred.</p>
+
+      <div class="card open">
+        <div class="card-b" style="display:block;padding-top:4px;">
+          <table class="case-table">
+            <thead><tr><th>Customer</th><th>Loss</th><th>Type</th><th>Investigator</th><th>Status</th><th>Kindred</th></tr></thead>
+            <tbody>
+              <tr onclick="openCase('margaret')"><td class="case-name">Margaret Chen</td><td class="case-loss">$85,000</td><td>Pig butchering</td><td>Carmen Reyes</td><td><span class="chip chip-red"><span class="cd"></span>Active operation</span></td><td><span class="chip chip-accent" style="cursor:pointer">4 connections found</span></td></tr>
+              <tr><td class="case-name">James Whitfield</td><td class="case-loss">$142,000</td><td>Pig butchering</td><td>Carmen Reyes</td><td><span class="chip chip-amber"><span class="cd"></span>Under review</span></td><td><span class="chip chip-amber" style="cursor:pointer"><span class="cd"></span>Signals detected</span></td></tr>
+              <tr><td class="case-name">Richard Osei</td><td class="case-loss">$94,000</td><td>Pig butchering</td><td>Lisa Nguyen</td><td><span class="chip chip-amber"><span class="cd"></span>Under review</span></td><td><span class="chip chip-amber" style="cursor:pointer"><span class="cd"></span>Signals detected</span></td></tr>
+              <tr><td class="case-name">Patricia Huang</td><td class="case-loss">$67,000</td><td>Investment fraud</td><td>David Park</td><td><span class="chip chip-amber"><span class="cd"></span>Under review</span></td><td><span class="chip chip-amber" style="cursor:pointer"><span class="cd"></span>Signals detected</span></td></tr>
+              <tr onclick="openCase('michael')"><td class="case-name">Michael Torres</td><td class="case-loss">$38,500</td><td>Romance scam</td><td>Lisa Nguyen</td><td style="color:var(--ink3);font-size:11px">Closed</td><td style="color:var(--ink3);font-size:11px">No patterns</td></tr>
+              <tr><td class="case-name">Barbara Kim</td><td class="case-loss">$21,000</td><td>Investment fraud</td><td>David Park</td><td style="color:var(--ink3);font-size:11px">Closed</td><td style="color:var(--ink3);font-size:11px">No patterns</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Understand the case (Margaret) -->
+    <div class="screen" id="s0">
+      <h2>Understand the case</h2>
+      <p class="sub">Kindred read this case and pulled out the key details. Review, edit anything that looks wrong, then approve to search.</p>
+
+      <div class="card open">
+        <div class="card-h" onclick="tog(this)">
+          <h3>Source case: Margaret Chen</h3>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="chip chip-red"><span class="cd"></span>Confirmed fraud</span>
+            <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="dr">
+            <dt>Loss</dt><dd class="mono red">$85,000</dd>
+            <dt>Type</dt><dd>Investment fraud (pig butchering)</dd>
+            <dt>Duration</dt><dd>Jan 12 &ndash; Mar 8, 2025 (8 weeks)</dd>
+            <dt>Investigator</dt><dd>Carmen Reyes</dd>
+            <dt>Status</dt><dd>Case closed. SAR filed.</dd>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h" onclick="tog(this)">
+          <h3>How it started</h3>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="src-tag src-bank">Bank records</span>
+            <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="field" contenteditable="true">Contacted on WhatsApp by someone posing as an investment advisor. Three weeks of trust-building before any money moved. Scammer showed fake returns on a fake trading app. Told Margaret not to tell her family.</div>
+          <div class="field-hint">Source: victim statement and case notes (Carmen Reyes).</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h" onclick="tog(this)">
+          <h3>How payments escalated</h3>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="src-tag src-bank">Bank records</span>
+            <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="field" contenteditable="true">Five wire transfers over six weeks. Started at $5,000, grew to $25,000. Each one followed a phone call. Money was wired to a third-party bank account Margaret had never used before.</div>
+          <div class="field-hint">Source: transaction history (Pacific National Bank).</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h" onclick="tog(this)">
+          <h3>Where the crypto went</h3>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="src-tag src-trm">TRM blockchain data</span>
+            <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="field" contenteditable="true">The third-party account converted Margaret's money to USDT at a US exchange. From there, TRM traced it through two intermediate wallets to a Southeast Asian exchange with weak identity checks. All five deposits followed the same path to the same wallet cluster.</div>
+          <div class="field-hint">Source: TRM wallet attribution and fund tracing.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h" onclick="tog(this)">
+          <h3>Unusual account activity</h3>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="src-tag src-bank">Bank records</span>
+            <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="field" contenteditable="true">New payee added after 4 years of unchanged activity. Transaction amounts 3x her previous maximum. Late-night banking logins coinciding with phone calls. No prior crypto activity.</div>
+          <div class="field-hint">Source: account history (Pacific National Bank).</div>
+        </div>
+      </div>
+
+      <div class="btns">
+        <button class="btn btn-p" onclick="startSearch()">Approve &amp; search &rarr;</button>
+        <button class="btn btn-g" onclick="page('cases')">&larr; Back to cases</button>
+      </div>
+    </div>
+
+    <!-- SEARCH ANIMATION -->
+    <div class="screen" id="sSearch">
+      <div class="search-wrap">
+        <div class="search-ring"><svg viewBox="0 0 20 20" fill="none"><path d="M10 3L4 7v6l6 4 6-4V7l-6-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg></div>
+        <div class="search-status">
+          <h2>Searching for related activity</h2>
+          <p class="sub" style="margin-bottom:0">Kindred is analyzing Margaret Chen's case against Pacific National Bank's case history and TRM's blockchain data.</p>
+        </div>
+        <div class="search-progress"><div class="search-progress-fill" id="searchBar"></div></div>
+        <ul class="search-steps" id="searchSteps">
+          <li class="search-step" data-step="0"><span class="ss-icon"></span>Reading case data and victim narrative</li>
+          <li class="search-step" data-step="1"><span class="ss-icon"></span>Extracting transaction patterns and timing signals</li>
+          <li class="search-step" data-step="2"><span class="ss-icon"></span>Scanning 2,847 cases for narrative similarity</li>
+          <li class="search-step" data-step="3"><span class="ss-icon"></span>Cross-referencing TRM blockchain intelligence</li>
+          <li class="search-step" data-step="4"><span class="ss-icon"></span>Evaluating candidate strength and conflicts</li>
+          <li class="search-step" data-step="5"><span class="ss-icon"></span>Generating evidence summaries</li>
+        </ul>
+        <div class="search-counter" id="searchCounter"></div>
+      </div>
+    </div>
+
+    <!-- STEP 1: Understand the case (Michael - no match case) -->
+    <div class="screen" id="s0_nomatch">
+      <h2>Understand the case</h2>
+      <p class="sub">Kindred read this case and pulled out the key details. Review, edit anything that looks wrong, then approve to search.</p>
+
+      <div class="card open">
+        <div class="card-h" onclick="tog(this)">
+          <h3>Source case: Michael Torres</h3>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="chip chip-red"><span class="cd"></span>Confirmed fraud</span>
+            <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="dr">
+            <dt>Loss</dt><dd class="mono red">$38,500</dd>
+            <dt>Type</dt><dd>Romance scam</dd>
+            <dt>Duration</dt><dd>Feb 1 &ndash; Mar 5, 2025 (5 weeks)</dd>
+            <dt>Investigator</dt><dd>Lisa Nguyen</dd>
+            <dt>Status</dt><dd>Case closed. SAR filed.</dd>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h" onclick="tog(this)">
+          <h3>How it started</h3>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="src-tag src-bank">Bank records</span>
+            <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="field" contenteditable="true">Met someone on a dating app who claimed to be a nurse working abroad. Relationship developed over 3 weeks before any financial requests. Scammer claimed a medical emergency and asked for wire transfers to cover hospital bills.</div>
+          <div class="field-hint">Source: victim statement and case notes (Lisa Nguyen).</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-h" onclick="tog(this)">
+          <h3>Payment details</h3>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="src-tag src-bank">Bank records</span>
+            <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="card-b">
+          <div class="field" contenteditable="true">Three wire transfers to an overseas bank account. $8,500, $12,000, and $18,000. No crypto involvement. Funds wired directly to a personal account in Nigeria.</div>
+          <div class="field-hint">Source: transaction history (Pacific National Bank).</div>
+        </div>
+      </div>
+
+      <div class="btns">
+        <button class="btn btn-p" onclick="startSearchNoMatch()">Approve &amp; search &rarr;</button>
+        <button class="btn btn-g" onclick="page('cases')">&larr; Back to cases</button>
+      </div>
+    </div>
+
+    <!-- SEARCH ANIMATION (no match) -->
+    <div class="screen" id="sSearchNoMatch">
+      <div class="search-wrap">
+        <div class="search-ring"><svg viewBox="0 0 20 20" fill="none"><path d="M10 3L4 7v6l6 4 6-4V7l-6-4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/></svg></div>
+        <div class="search-status">
+          <h2>Searching for related activity</h2>
+          <p class="sub" style="margin-bottom:0">Kindred is analyzing Michael Torres's case against Pacific National Bank's case history and TRM's blockchain data.</p>
+        </div>
+        <div class="search-progress"><div class="search-progress-fill" id="searchBarNM"></div></div>
+        <ul class="search-steps" id="searchStepsNM">
+          <li class="search-step" data-step="0"><span class="ss-icon"></span>Reading case data and victim narrative</li>
+          <li class="search-step" data-step="1"><span class="ss-icon"></span>Extracting transaction patterns and timing signals</li>
+          <li class="search-step" data-step="2"><span class="ss-icon"></span>Scanning 2,847 cases for narrative similarity</li>
+          <li class="search-step" data-step="3"><span class="ss-icon"></span>Cross-referencing TRM blockchain intelligence</li>
+          <li class="search-step" data-step="4"><span class="ss-icon"></span>Evaluating candidate strength</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- NO MATCH RESULT -->
+    <div class="screen" id="sNoMatch">
+      <h2>Kindred's assessment</h2>
+      <p class="sub">Kindred searched 2,847 cases and TRM's blockchain data for activity connected to Michael Torres's case.</p>
+
+      <div class="stats tri-col">
+        <div class="stat"><div class="stat-l">Cases searched</div><div class="stat-n accent">2,847</div></div>
+        <div class="stat"><div class="stat-l">Blockchain entities checked</div><div class="stat-n accent">0</div><div class="stat-sub">No crypto activity in this case</div></div>
+        <div class="stat"><div class="stat-l">Candidates found</div><div class="stat-n">0</div></div>
+      </div>
+
+      <div class="empty-state">
+        <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M16 16l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9 11h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <h3>No strong connections found</h3>
+        <p>Kindred did not find cases with sufficient evidence to suggest a connection to Michael Torres's case. This does not mean related cases don't exist &mdash; it means the available evidence did not meet the minimum threshold.</p>
+        <div class="empty-detail">
+          <h4>What Kindred searched</h4>
+          <div class="dr" style="gap:4px 16px;">
+            <dt>Narratives</dt><dd>Compared victim statement against 2,847 case narratives</dd>
+            <dt>Payments</dt><dd>Wire transfer pattern, amounts, timing, and payee history</dd>
+            <dt>Blockchain</dt><dd>Not applicable &mdash; no crypto transactions in this case</dd>
+            <dt>Timing</dt><dd>Overlapping activity windows across open and closed cases</dd>
+          </div>
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-subtle);">
+            <div class="ev-h r">Why no candidates met the threshold</div>
+            <ul class="ev-list ev-ag">
+              <li>No crypto involvement limits cross-referencing with TRM blockchain data</li>
+              <li>Wire transfers went to a personal overseas account, not through exchanges</li>
+              <li>Romance scam narrative pattern did not match investment fraud cases in the corpus</li>
+              <li>No shared payees, accounts, or infrastructure with other cases</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="feedback-bar">
+        <div class="fb-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M8 2v4M8 10v.01M4 8a4 4 0 108 0 4 4 0 00-8 0z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+        <div class="fb-text"><strong>Kindred will continue monitoring.</strong> If a future case shares signals with Michael Torres's case, Kindred will surface the connection.</div>
+      </div>
+
+      <div class="btns">
+        <button class="btn btn-g" onclick="page('cases')">&larr; Back to cases</button>
+      </div>
+    </div>
+
+    <!-- STEP 2: Find related activity -->
+    <div class="screen" id="s1">
+      <h2>Kindred's assessment</h2>
+      <p class="sub">Kindred searched 2,847 cases and TRM's blockchain data for activity connected to Margaret Chen's case. It identified 4 customers who may be part of the same operation.</p>
+
+      <div class="stats tri-col">
+        <div class="stat"><div class="stat-l">Cases searched</div><div class="stat-n accent">2,847</div></div>
+        <div class="stat"><div class="stat-l">Total operation exposure</div><div class="stat-n red">$377K</div><div class="stat-sub">Across 5 customers in this operation</div></div>
+        <div class="stat"><div class="stat-l">Connections found</div><div class="stat-n">4</div><div class="stat-sub">Plus Margaret Chen (source case)</div></div>
+      </div>
+
+      <div class="sec-label">Kindred's findings</div>
+
+      <div class="match" id="m1">
+        <div class="match-row" onclick="togM(this)">
+          <div class="match-left"><span class="match-name">Susan Park</span><span class="match-amt">$43K sent so far</span><span class="src-tag src-both" style="margin-left:6px">No case filed</span></div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="chip chip-green"><span class="cd"></span>Strong evidence</span>
+            <span class="chip chip-red"><span class="cd"></span>Next deposit in 8-10 days</span>
+          </div>
+          <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="match-detail">
+          <div class="ev-for"><div class="ev-h g">Why Kindred thinks this is connected</div><ul class="ev-list"><li>Deposits every 8&ndash;10 days, increasing amounts</li><li>Same US exchange used to buy USDT</li><li>Promised "guaranteed 40% returns"</li><li>New payee added after years of stable activity</li></ul></div>
+          <div class="ev-ag"><div class="ev-h r">What doesn't fit</div><ul class="ev-list"><li>Different wallet cluster</li><li>Contacted on Telegram, not WhatsApp</li><li>No case filed: flagged by transaction monitoring</li></ul></div>
+          <div class="match-feedback">
+            <div class="fb-label">Your assessment:</div>
+            <div class="fb-btns">
+              <button class="tri" onclick="setVerdict('m1','agree',this)">Useful connection</button>
+              <button class="tri" onclick="setVerdict('m1','disagree',this)">Not related</button>
+            </div>
+            <button class="compare-btn" onclick="showCompare(0)">Compare with source &rarr;</button>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="match" id="m0">
+        <div class="match-row" onclick="togM(this)">
+          <div class="match-left"><span class="match-name">Robert Aldridge</span><span class="match-amt">$127K lost</span><span class="src-tag src-bank" style="margin-left:6px">Existing case</span></div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="chip chip-green"><span class="cd"></span>Strong evidence</span>
+          </div>
+          <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="match-detail">
+          <div class="ev-for"><div class="ev-h g">Why Kindred thinks this is connected</div><ul class="ev-list"><li>Same wallet cluster identified by TRM</li><li>5 escalating deposits on the same schedule</li><li>Contacted on WhatsApp with the same script</li><li>Same US exchange used to buy USDT</li><li>Same late-night login pattern</li></ul></div>
+          <div class="ev-ag"><div class="ev-h r">What doesn't fit</div><ul class="ev-list"><li>Different intermediary bank account</li><li>Reported 2 weeks before Margaret</li></ul></div>
+          <div class="match-feedback">
+            <div class="fb-label">Your assessment:</div>
+            <div class="fb-btns">
+              <button class="tri" onclick="setVerdict('m0','agree',this)">Useful connection</button>
+              <button class="tri" onclick="setVerdict('m0','disagree',this)">Not related</button>
+            </div>
+            <button class="compare-btn" onclick="showCompare(1)">Compare with source &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="match" id="m2">
+        <div class="match-row" onclick="togM(this)">
+          <div class="match-left"><span class="match-name">David Okafor</span><span class="match-amt">$92K lost</span><span class="src-tag src-bank" style="margin-left:6px">Existing case</span></div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="chip chip-amber"><span class="cd"></span>Moderate evidence</span>
+          </div>
+          <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="match-detail">
+          <div class="ev-for"><div class="ev-h g">Why Kindred thinks this is connected</div><ul class="ev-list"><li>4 escalating deposits over 5 weeks</li><li>Told about an "exclusive opportunity"</li><li>Same stablecoin (USDT)</li><li>Overlapping time window</li></ul></div>
+          <div class="ev-ag"><div class="ev-h r">What doesn't fit</div><ul class="ev-list"><li>Funds went to a European exchange, not Southeast Asian</li><li>Contact was through a dating app, not messaging</li><li>First deposit was $20K: much higher starting point</li></ul></div>
+          <div class="match-feedback">
+            <div class="fb-label">Your assessment:</div>
+            <div class="fb-btns">
+              <button class="tri" onclick="setVerdict('m2','agree',this)">Useful connection</button>
+              <button class="tri" onclick="setVerdict('m2','disagree',this)">Not related</button>
+            </div>
+            <button class="compare-btn" onclick="showCompare(2)">Compare with source &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="match" id="m3">
+        <div class="match-row" onclick="togM(this)">
+          <div class="match-left"><span class="match-name">Linda Vasquez</span><span class="match-amt">$28K lost</span><span class="src-tag src-bank" style="margin-left:6px">Existing case</span></div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="chip" style="background:var(--surface-hover);color:var(--ink3);border:1px solid var(--border)"><span class="cd"></span>Weak evidence</span>
+          </div>
+          <svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="match-detail">
+          <div class="ev-for"><div class="ev-h g">Why Kindred flagged this</div><ul class="ev-list"><li>Same stablecoin and same exchange</li><li>Overlapping 6-week window</li></ul></div>
+          <div class="ev-ag"><div class="ev-h r">What doesn't fit</div><ul class="ev-list"><li>Two lump sums, not escalating deposits</li><li>No victim statement on file</li><li>Different wallet cluster</li><li>Had prior crypto activity (others didn't)</li></ul></div>
+          <div class="match-feedback">
+            <div class="fb-label">Your assessment:</div>
+            <div class="fb-btns">
+              <button class="tri" onclick="setVerdict('m3','agree',this)">Useful connection</button>
+              <button class="tri" onclick="setVerdict('m3','disagree',this)">Not related</button>
+            </div>
+            <button class="compare-btn" onclick="showCompare(3)">Compare with source &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="feedback-bar">
+        <div class="fb-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M8 2v4M8 10v.01M4 8a4 4 0 108 0 4 4 0 00-8 0z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+        <div class="fb-text"><strong>Carmen's input improves Kindred.</strong> When Carmen confirms or rejects these findings, that feedback helps Kindred make better assessments over time.</div>
+      </div>
+
+      <div class="btns">
+        <button class="btn btn-p" onclick="go(2)">What can we do? &rarr;</button>
+        <button class="btn btn-g" onclick="go(0)">&larr; Back</button>
+      </div>
+    </div>
+
+    <!-- SIDE-BY-SIDE COMPARISON -->
+    <div class="screen" id="sCompare">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+        <button class="btn btn-g" onclick="go(1)" style="padding:6px 12px;">&larr;</button>
+        <h2 style="margin-bottom:0;" id="compareTitle">Side-by-side comparison</h2>
+      </div>
+      <p class="sub">Compare the source case with this candidate side by side. <span style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;"><span style="display:inline-block;width:10px;height:10px;background:var(--green-soft);border-left:2px solid var(--green);"></span><span style="font-size:11px;color:var(--ink2);">Match</span></span> <span style="display:inline-flex;align-items:center;gap:4px;margin-left:8px;"><span style="display:inline-block;width:10px;height:10px;background:var(--amber-soft);border-left:2px solid var(--amber);"></span><span style="font-size:11px;color:var(--ink2);">Differs</span></span></p>
+
+      <div class="compare-grid" id="compareContent"></div>
+
+      <div class="btns">
+        <button class="btn btn-g" onclick="go(1)">&larr; Back to findings</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Intervene -->
+    <div class="screen" id="s2">
+      <h2>Intervene</h2>
+      <p class="sub">Here's who may still be at risk, what funds may still be recoverable, and what Kindred recommends.</p>
+
+      <div class="impact" id="impactBox">
+        <div class="impact-title">What Kindred found</div>
+        <div class="impact-grid" id="impactGrid">
+          <!-- populated dynamically -->
+        </div>
+      </div>
+
+      <div class="net-wrap">
+        <div class="net-title">Operation map</div>
+        <canvas class="net-canvas" id="netGraph"></canvas>
+      </div>
+
+      <div class="sec-label">Customers</div>
+      <div id="interventionCards"></div>
+
+      <div class="divider"></div>
+
+      <div class="sec-label">Evidence summary</div>
+      <div class="card open">
+        <div class="card-h" style="cursor:default;">
+          <h3>Operation summary</h3>
+          <span class="src-tag src-trm">Editable</span>
+        </div>
+        <div class="card-b" style="display:block;">
+          <div class="field" contenteditable="true" id="evidenceSummary" style="min-height:60px;white-space:pre-line;"></div>
+          <div class="field-hint">Edit before escalating. This summary will be attached to the audit record.</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="card open">
+        <div class="card-h" style="cursor:default;">
+          <h3>Escalate this operation</h3>
+        </div>
+        <div class="card-b" style="display:block;" id="escalateBody">
+          <div class="act"><div class="act-bar p2"></div><div class="act-body"><div class="act-t">Escalate to fraud operations lead</div><div class="act-d" id="escalateDesc"></div></div></div>
+          <div class="btns" style="margin-top:12px;">
+            <button class="btn btn-red" onclick="showEscalation()">Escalate operation &rarr;</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="auditSection" style="display:none;">
+        <div class="divider"></div>
+        <div class="sec-label">Audit record</div>
+        <div class="audit-record">
+          <h3><span class="audit-badge">Recorded</span> Operation OP-2025-04172</h3>
+          <div class="audit-row">
+            <dt>Timestamp</dt><dd id="auditTime"></dd>
+            <dt>Analyst</dt><dd>Carmen Reyes (ID: CR-4821)</dd>
+            <dt>Action</dt><dd>Escalated suspected scam operation</dd>
+            <dt>Confirmed cases</dt><dd id="auditConfirmed"></dd>
+            <dt>Dismissed cases</dt><dd id="auditDismissed"></dd>
+            <dt>Total exposure</dt><dd id="auditExposure"></dd>
+            <dt>Model version</dt><dd>kindred-v1.2.4-beta</dd>
+            <dt>Search scope</dt><dd>2,847 institution cases + TRM blockchain intelligence</dd>
+            <dt>Evidence hash</dt><dd id="auditHash"></dd>
+          </div>
+          <div id="auditHolds" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-subtle);"></div>
+        </div>
+      </div>
+
+      <div class="feedback-bar" style="margin-top:16px;">
+        <div class="fb-icon"><svg viewBox="0 0 16 16" fill="none"><path d="M8 2v4M8 10v.01M4 8a4 4 0 108 0 4 4 0 00-8 0z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></div>
+        <div class="fb-text"><strong>Carmen decides what to act on.</strong> Kindred surfaces information and recommends next steps. Transaction holds require investigator justification, acknowledgment of risk, and produce an immutable audit record.</div>
+      </div>
+
+      <div class="btns">
+        <button class="btn btn-g" onclick="go(1)">&larr; Back</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="escalationOverlay" style="display:none;"></div>
+
+<script>
+const allScreens = ['pgDash','pgCases','s0','s0_nomatch','sSearch','sSearchNoMatch','sNoMatch','s1','sCompare','s2'];
+const railItems = document.querySelectorAll('.rail-nav .ri');
+const wfSteps = document.querySelectorAll('#wfSteps .si');
+const sideNav = document.getElementById('sideNav');
+const sideWf = document.getElementById('sideWorkflow');
+const sideFoot = document.getElementById('sideFoot');
+
+const verdicts = { m0:null, m1:null, m2:null, m3:null };
+const holds = {};
+
+const matchData = [
+  { id:'m1', name:'Susan Park', amt:'$43K', loss:43000, status:'No case filed', tier:'strong',
+    forEvidence:['Deposits every 8–10 days, increasing amounts','Same US exchange used to buy USDT','Promised "guaranteed 40% returns"','New payee added after years of stable activity'],
+    againstEvidence:['Different wallet cluster','Contacted on Telegram, not WhatsApp','No case filed: flagged by transaction monitoring'],
+    compareSummary:'Both Margaret and Susan made escalating deposits through the same US exchange to buy USDT, were promised high returns, and both added a new payee after years of stable account activity. However, Susan was contacted on Telegram instead of WhatsApp, and her funds ended up in a different wallet cluster. Susan has not filed a case — she was flagged by the bank\'s transaction monitoring, which may mean she doesn\'t know she\'s being scammed.',
+    compare: {
+      contact:{src:'WhatsApp — investment advisor',cand:'Telegram — investment advisor',match:false},
+      deposits:{src:'5 deposits, $5K→$25K over 6 weeks',cand:'4 deposits, $6K→$15K over 5 weeks',match:true},
+      exchange:{src:'US exchange → USDT',cand:'US exchange → USDT',match:true},
+      wallet:{src:'Wallet cluster A (SE Asian exchange)',cand:'Different cluster (SE Asian exchange)',match:false},
+      returns:{src:'Shown fake returns on fake trading app',cand:'Promised "guaranteed 40% returns"',match:true},
+      accountChange:{src:'New payee after 4 years stable',cand:'New payee after 6 years stable',match:true}
+    },
+    intervention:{urgent:true,label:'Urgent',chipClass:'chip-red',
+      dr:'<dt>Sent so far</dt><dd class="mono">$43,000 (4 deposits)</dd><dt>Pattern</dt><dd>Deposits every 8–10 days, amounts increasing</dd><dt>Next deposit</dt><dd class="red">Projected within 8–10 days based on cadence</dd><dt>At risk</dt><dd class="red">$15,000+ if pattern continues (5th deposit)</dd>',
+      actions:[{p:'p1',t:'Reach out to Susan Park',d:'She may be mid-scam and not know it. Intervene before her next deposit.'},{p:'p1',t:'Place enhanced monitoring on her account',d:'Flag any outbound wire or crypto purchase for manual review.'}],
+      holdable:true, holdType:'account', holdConf:72, holdConfLabel:'Strong',
+      holdTarget:'Susan Park — Account #****6209',
+      holdDesc:'Temporary hold on outbound wires and crypto purchases. Existing direct debits and inbound transfers unaffected.',
+      holdRisk:'Susan Park has not filed a complaint. If this is not a scam, a hold will block legitimate transactions and may trigger a customer complaint. The hold is reversible within 24 hours.'}
+  },
+  { id:'m0', name:'Robert Aldridge', amt:'$127K', loss:127000, status:'Existing case', tier:'strong',
+    forEvidence:['Same wallet cluster identified by TRM','5 escalating deposits on the same schedule','Contacted on WhatsApp with the same script','Same US exchange used to buy USDT','Same late-night login pattern'],
+    againstEvidence:['Different intermediary bank account','Reported 2 weeks before Margaret'],
+    compareSummary:'Robert and Margaret look like the same operation. Both were contacted on WhatsApp by someone posing as an investment advisor, both made 5 escalating deposits through the same US exchange, both converted to USDT that ended up in the same wallet cluster, and both had late-night banking logins after phone calls. The only differences: Robert used a different intermediary bank account, and his case started about 2 weeks earlier.',
+    compare: {
+      contact:{src:'WhatsApp — investment advisor',cand:'WhatsApp — investment advisor',match:true},
+      deposits:{src:'5 deposits, $5K→$25K over 6 weeks',cand:'5 deposits, $8K→$30K over 6 weeks',match:true},
+      exchange:{src:'US exchange → USDT',cand:'US exchange → USDT',match:true},
+      wallet:{src:'Wallet cluster A (SE Asian exchange)',cand:'Wallet cluster A (SE Asian exchange)',match:true},
+      timing:{src:'Jan 12 – Mar 8, 2025',cand:'Dec 28, 2024 – Feb 22, 2025',match:false},
+      intermediary:{src:'Third-party account #****4821',cand:'Third-party account #****7103',match:false},
+      loginPattern:{src:'Late-night logins after phone calls',cand:'Late-night logins after phone calls',match:true}
+    },
+    intervention:{urgent:false,label:'Window closing',chipClass:'chip-amber',
+      dr:'<dt>Lost</dt><dd class="mono">$127,000</dd><dt>Recoverable</dt><dd class="amber">~$25,600 USDT hasn\'t moved from an exchange in 6 days</dd>',
+      actions:[{p:'p2',t:'Flag $25,600 USDT at exchange',d:'Funds haven\'t moved in 6 days but could at any time.'}],
+      holdable:true, holdType:'funds', holdConf:89, holdConfLabel:'Very strong',
+      holdTarget:'$25,600 USDT — Exchange wallet (Coinbase)',
+      holdDesc:'Request exchange freeze on $25,600 USDT linked to Robert Aldridge\'s case. Funds have been stationary for 6 days.',
+      holdRisk:'If this USDT is not proceeds of fraud, the freeze request could delay a legitimate withdrawal. Exchange cooperation is voluntary and subject to their own review process.'}
+  },
+  { id:'m2', name:'David Okafor', amt:'$92K', loss:92000, status:'Existing case', tier:'moderate',
+    forEvidence:['4 escalating deposits over 5 weeks','Told about an "exclusive opportunity"','Same stablecoin (USDT)','Overlapping time window'],
+    againstEvidence:['Funds went to a European exchange, not Southeast Asian','Contact was through a dating app, not messaging','First deposit was $20K: much higher starting point'],
+    compareSummary:'David and Margaret both made escalating deposits to buy USDT during the same time window, and both were pitched what sounded like an investment opportunity. But the similarities get weaker from there: David was contacted through a dating app instead of WhatsApp, his funds went to a European exchange instead of Southeast Asia, and his first deposit was $20K — much higher than Margaret\'s $5K starting point. This could be the same ring using different tactics, or a separate operation with a similar playbook.',
+    compare: {
+      contact:{src:'WhatsApp — investment advisor',cand:'Dating app — met organically',match:false},
+      deposits:{src:'5 deposits, $5K→$25K over 6 weeks',cand:'4 deposits, $20K→$28K over 5 weeks',match:false},
+      exchange:{src:'US exchange → SE Asian exchange',cand:'US exchange → European exchange',match:false},
+      stablecoin:{src:'USDT',cand:'USDT',match:true},
+      timing:{src:'Jan 12 – Mar 8, 2025',cand:'Jan 20 – Feb 28, 2025',match:true},
+      narrative:{src:'"Investment advisor" script',cand:'"Exclusive opportunity" pitch',match:true}
+    },
+    intervention:{urgent:false,label:'Case closed',chipClass:'',chipStyle:'background:var(--surface-hover);color:var(--ink3);border:1px solid var(--border)',
+      dr:'<dt>Lost</dt><dd class="mono">$92,000</dd><dt>Recoverable</dt><dd>None. Funds already moved off exchanges.</dd><dt>Status</dt><dd>SAR filed Feb 28. No further action available.</dd>',
+      actions:[]}
+  },
+  { id:'m3', name:'Linda Vasquez', amt:'$28K', loss:28000, status:'Existing case', tier:'weak',
+    forEvidence:['Same stablecoin and same exchange','Overlapping 6-week window'],
+    againstEvidence:['Two lump sums, not escalating deposits','No victim statement on file','Different wallet cluster','Had prior crypto activity (others didn\'t)'],
+    compareSummary:'Linda used the same exchange and the same stablecoin (USDT) as Margaret, and the timing overlaps. But that may be where the connection ends. Linda made two lump-sum payments instead of escalating deposits, her funds went to a different wallet cluster, and she had prior crypto activity — unlike everyone else in this group. There\'s also no victim statement on file, so Kindred has less to compare. The evidence is thin.',
+    compare: {
+      contact:{src:'WhatsApp — investment advisor',cand:'Unknown — no victim statement',match:false},
+      deposits:{src:'5 escalating deposits over 6 weeks',cand:'2 lump sums',match:false},
+      exchange:{src:'US exchange → USDT',cand:'US exchange → USDT',match:true},
+      wallet:{src:'Wallet cluster A',cand:'Different cluster',match:false},
+      priorCrypto:{src:'No prior crypto activity',cand:'Prior crypto activity on record',match:false}
+    },
+    intervention:{urgent:false,label:'Case closed',chipClass:'',chipStyle:'background:var(--surface-hover);color:var(--ink3);border:1px solid var(--border)',
+      dr:'<dt>Lost</dt><dd class="mono">$28,000</dd><dt>Recoverable</dt><dd>None.</dd><dt>Status</dt><dd>Case closed. No further action.</dd>',
+      actions:[]}
+  }
+];
+
+function hideAll() { allScreens.forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('on'); }); }
+
+function setRail(idx) { railItems.forEach((r,i) => { r.classList.remove('on'); if(i===idx) r.classList.add('on'); }); }
+
+function page(p) {
+  hideAll();
+  sideWf.style.display = 'none';
+  sideNav.style.display = 'block';
+
+  if (p === 'dash') { document.getElementById('pgDash').classList.add('on'); setRail(0); }
+  else if (p === 'cases') { document.getElementById('pgCases').classList.add('on'); setRail(1); }
+  document.querySelector('.main').scrollTop = 0;
+}
+
+let activeCase = 'margaret';
+
+function openCase(which) {
+  activeCase = which || 'margaret';
+  hideAll();
+  sideNav.style.display = 'none';
+  sideWf.style.display = 'block';
+
+  setRail(1);
+  if(activeCase === 'michael') {
+    document.getElementById('sideRef').textContent = 'CS-2025-03891';
+    document.getElementById('sideName').textContent = 'Michael Torres';
+    document.getElementById('sideLoss').textContent = '$38,500 lost';
+    document.getElementById('s0_nomatch').classList.add('on');
+    wfSteps.forEach((s,i) => { s.classList.remove('on','done'); if(i===0) s.classList.add('on'); });
+  } else {
+    document.getElementById('sideRef').textContent = 'OP-2025-04172';
+    document.getElementById('sideName').textContent = 'Margaret Chen';
+    document.getElementById('sideLoss').textContent = '$85,000 lost';
+    go(0);
+  }
+  document.querySelector('.main').scrollTop = 0;
+}
+
+function go(n) {
+  hideAll();
+  sideNav.style.display = 'none';
+  sideWf.style.display = 'block';
+
+  setRail(1);
+  wfSteps.forEach((s,i) => { s.classList.remove('on','done'); if(i<n) s.classList.add('done'); if(i===n) s.classList.add('on'); });
+  document.getElementById('s'+n).classList.add('on');
+  document.querySelector('.main').scrollTop = 0;
+  if(n===2) { buildInterventionStep(); setTimeout(drawNet, 50); }
+}
+
+function tog(h) { h.closest('.card').classList.toggle('open'); }
+function togM(row) { row.closest('.match').classList.toggle('open'); }
+
+// --- 1. SEARCH ANIMATION ---
+function startSearch() {
+  hideAll();
+  document.getElementById('sSearch').classList.add('on');
+  wfSteps.forEach((s,i) => { s.classList.remove('on','done'); if(i===0) s.classList.add('done'); if(i===1) s.classList.add('on'); });
+  document.querySelector('.main').scrollTop = 0;
+  runSearchAnimation('searchSteps', 'searchBar', () => go(1));
+}
+
+function startSearchNoMatch() {
+  hideAll();
+  document.getElementById('sSearchNoMatch').classList.add('on');
+  wfSteps.forEach((s,i) => { s.classList.remove('on','done'); if(i===0) s.classList.add('done'); if(i===1) s.classList.add('on'); });
+  document.querySelector('.main').scrollTop = 0;
+  runSearchAnimation('searchStepsNM', 'searchBarNM', () => {
+    hideAll();
+    document.getElementById('sNoMatch').classList.add('on');
+    document.querySelector('.main').scrollTop = 0;
+  });
+}
+
+function runSearchAnimation(stepsId, barId, onComplete) {
+  const steps = document.querySelectorAll('#'+stepsId+' .search-step');
+  const bar = document.getElementById(barId);
+  const total = steps.length;
+  let current = 0;
+  steps.forEach(s => s.classList.remove('active','done'));
+
+  function advance() {
+    if(current > 0) steps[current-1].classList.remove('active'), steps[current-1].classList.add('done');
+    if(current >= total) {
+      bar.style.width = '100%';
+      setTimeout(onComplete, 400);
+      return;
+    }
+    steps[current].classList.add('active');
+    bar.style.width = ((current+1)/total*100)+'%';
+    current++;
+    setTimeout(advance, 600 + Math.random()*400);
+  }
+  setTimeout(advance, 300);
+}
+
+// --- 2. FUNCTIONAL FEEDBACK ---
+function setVerdict(matchId, verdict, btn) {
+  const prev = verdicts[matchId];
+  const match = document.getElementById(matchId);
+  const btns = match.querySelectorAll('.match-feedback .tri');
+
+  btns.forEach(b => b.classList.remove('s-y','s-n'));
+
+  if(prev === verdict) {
+    verdicts[matchId] = null;
+    match.classList.remove('dismissed');
+    return;
+  }
+
+  verdicts[matchId] = verdict;
+  if(verdict === 'agree') {
+    btn.classList.add('s-y');
+    match.classList.remove('dismissed');
+  } else {
+    btn.classList.add('s-n');
+    match.classList.add('dismissed');
+  }
+}
+
+// --- 3. EVIDENCE SUMMARY + INTERVENTION STEP ---
+function buildInterventionStep() {
+  const confirmed = matchData.filter(m => verdicts[m.id] === 'agree');
+  const dismissed = matchData.filter(m => verdicts[m.id] === 'disagree');
+  const unreviewed = matchData.filter(m => verdicts[m.id] === null);
+  const active = [...confirmed, ...unreviewed];
+
+  const totalLoss = active.reduce((s,m) => s+m.loss, 0) + 85000;
+  const recoverable = active.some(m => m.id==='m1') ? 38000 : (active.some(m => m.id==='m0') ? 25600 : 0);
+  const urgentCount = active.filter(m => m.intervention.urgent).length;
+
+  document.getElementById('impactGrid').innerHTML = `
+    <div class="impact-item"><div class="impact-val">1 &rarr; ${active.length+1}</div><div class="impact-label">Started with 1 case, found ${active.length} more</div></div>
+    <div class="impact-item"><div class="impact-val" style="color:var(--red)">~$${Math.round(recoverable/1000)}K</div><div class="impact-label">Estimated recoverable funds</div></div>
+    <div class="impact-item"><div class="impact-val" style="color:${urgentCount?'var(--red)':'var(--ink3)'}; font-size:15px;">Susan Park</div><div class="impact-label">Next deposit projected in 8–10 days</div></div>
+  `;
+
+  let cardsHtml = '';
+  active.forEach(m => {
+    const iv = m.intervention;
+    const chipStyle = iv.chipStyle ? `style="${iv.chipStyle}"` : '';
+    const chipClass = iv.chipClass || '';
+    let actionsHtml = '';
+    if(iv.actions.length) {
+      actionsHtml = `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--border-subtle);"><div class="ev-h g" style="color:var(--ink3)">Kindred recommends</div>`;
+      iv.actions.forEach(a => { actionsHtml += `<div class="act"><div class="act-bar ${a.p}"></div><div class="act-body"><div class="act-t">${a.t}</div><div class="act-d">${a.d}</div></div></div>`; });
+      actionsHtml += '</div>';
+    }
+    let holdHtml = '';
+    if(iv.holdable) {
+      const isHeld = holds[m.id];
+      holdHtml = `<div class="hold-divider"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:4px;">
+          <div style="font-size:11px;color:var(--ink2);">${isHeld ? 'Hold placed by Carmen Reyes' : iv.holdType==='account' ? 'Place a temporary hold on outbound transactions' : 'Request exchange freeze on recoverable funds'}</div>
+          <button class="btn btn-hold${isHeld?' held':''}" onclick="${isHeld?'':`showHoldConfirm('${m.id}')`}">
+            ${isHeld
+              ? '<svg viewBox="0 0 16 16" fill="none"><path d="M4 8l3 3 5-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Hold active'
+              : '<svg viewBox="0 0 16 16" fill="none"><path d="M8 2a4 4 0 00-4 4v2H3a1 1 0 00-1 1v5a1 1 0 001 1h10a1 1 0 001-1V9a1 1 0 00-1-1h-1V6a4 4 0 00-4-4zm-2 4a2 2 0 114 0v2H6V6z" fill="currentColor"/></svg> Place hold'}
+          </button>
+        </div>`;
+    }
+    const verdictBadge = verdicts[m.id]==='agree' ? '<span class="chip chip-green" style="margin-left:8px;font-size:9px;">Confirmed</span>' : '';
+    cardsHtml += `
+      <div class="card${iv.urgent?' open':''}">
+        <div class="card-h" onclick="tog(this)">
+          <h3>${m.name}${verdictBadge}</h3>
+          <div style="display:flex;align-items:center;gap:8px;"><span class="chip ${chipClass}" ${chipStyle}><span class="cd"></span>${iv.label}</span><svg class="chevron" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="card-b"><div class="dr">${iv.dr}</div>${actionsHtml}${holdHtml}</div>
+      </div>`;
+  });
+
+  if(dismissed.length) {
+    cardsHtml += '<div style="margin-top:16px;"><div class="sec-label">Dismissed</div>';
+    dismissed.forEach(m => {
+      cardsHtml += `<div class="card" style="opacity:0.5;"><div class="card-h" style="cursor:default;"><h3>${m.name}</h3><span class="chip chip-red" style="font-size:9px;">Not related</span></div></div>`;
+    });
+    cardsHtml += '</div>';
+  }
+
+  document.getElementById('interventionCards').innerHTML = cardsHtml;
+
+  const confirmedNames = confirmed.map(m=>m.name);
+  const unreviewedNames = unreviewed.map(m=>m.name);
+  const allActiveNames = [...confirmedNames,...unreviewedNames];
+  document.getElementById('escalateDesc').textContent = `Coordinated operation: ${active.length} connected customers, $${Math.round(totalLoss/1000)}K total losses${urgentCount?`, next deposit projected in 8–10 days`:''}.`;
+
+  let summaryParts = [`Coordinated investment scam operation · ${active.length+1} customers · ~$${Math.round(totalLoss/1000)}K total exposure`];
+  if(urgentCount) summaryParts.push(`Susan Park may still be sending — next deposit projected within 8–10 days`);
+  if(recoverable>0) summaryParts.push(`~$${recoverable.toLocaleString()} USDT remains on US exchanges and may be recoverable`);
+  summaryParts.push(`Linked by: shared wallet clusters, matching deposit patterns, similar social engineering scripts`);
+  document.getElementById('evidenceSummary').textContent = summaryParts.join('\n');
+
+  document.getElementById('auditSection').style.display = 'none';
+}
+
+// --- ESCALATION + AUDIT ---
+function showEscalation() {
+  const overlay = document.getElementById('escalationOverlay');
+  const confirmed = matchData.filter(m => verdicts[m.id]==='agree');
+  const unreviewed = matchData.filter(m => verdicts[m.id]===null);
+  const active = [...confirmed,...unreviewed];
+  const summary = document.getElementById('evidenceSummary').textContent;
+
+  overlay.style.display = 'flex';
+  overlay.className = 'escalation-overlay';
+  overlay.onclick = function(e) { if(e.target === overlay) closeEscalation(); };
+  overlay.innerHTML = `
+    <div class="escalation-modal" onclick="event.stopPropagation()">
+      <h3>Confirm escalation</h3>
+      <p class="sub">This will create an immutable audit record and notify the fraud operations lead.</p>
+      <div class="card open" style="margin-bottom:12px;">
+        <div class="card-h" style="cursor:default;"><h3>Operation OP-2025-04172</h3></div>
+        <div class="card-b" style="display:block;">
+          <div class="dr">
+            <dt>Source case</dt><dd>Margaret Chen ($85,000)</dd>
+            <dt>Connected</dt><dd>${active.map(m=>m.name).join(', ')}</dd>
+            <dt>Total exposure</dt><dd class="mono red">$${Math.round((active.reduce((s,m)=>s+m.loss,0)+85000)/1000)}K</dd>
+            <dt>Analyst</dt><dd>Carmen Reyes</dd>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--ink2);margin-bottom:16px;">The evidence summary you edited will be attached to this escalation. It cannot be modified after submission.</div>
+      <div class="btns" style="margin-top:0;">
+        <button class="btn btn-red" onclick="confirmEscalation()">Confirm &amp; escalate</button>
+        <button class="btn btn-g" onclick="closeEscalation()">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
+function closeEscalation() { document.getElementById('escalationOverlay').style.display = 'none'; }
+
+// --- TRANSACTION HOLD ---
+function showHoldConfirm(matchId) {
+  const m = matchData.find(x => x.id === matchId);
+  if(!m || !m.intervention.holdable) return;
+  const iv = m.intervention;
+  const confColor = iv.holdConf >= 80 ? 'var(--green)' : iv.holdConf >= 60 ? 'var(--amber)' : 'var(--red)';
+  const overlay = document.getElementById('escalationOverlay');
+  overlay.style.display = 'flex';
+  overlay.className = 'escalation-overlay';
+  overlay.onclick = function(e) { if(e.target === overlay) closeEscalation(); };
+  overlay.innerHTML = `
+    <div class="escalation-modal" onclick="event.stopPropagation()">
+      <h3>${iv.holdType==='account' ? 'Place transaction hold' : 'Request exchange freeze'}</h3>
+      <p class="sub">Review the evidence strength and risk before proceeding.</p>
+
+      <div class="hold-field-label">Target</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:14px;">${iv.holdTarget}</div>
+
+      <div class="hold-field-label">Kindred confidence</div>
+      <div class="conf-meter">
+        <div class="conf-bar-wrap"><div class="conf-bar-fill" style="width:${iv.holdConf}%;background:${confColor};"></div></div>
+        <div class="conf-label" style="color:${confColor};">${iv.holdConf}%</div>
+      </div>
+      <div class="conf-desc">${iv.holdConfLabel} match based on ${m.forEvidence.length} supporting and ${m.againstEvidence.length} contradicting signals.</div>
+
+      <div class="hold-field-label" style="margin-top:14px;">What this does</div>
+      <div style="font-size:12px;color:var(--ink2);margin-bottom:4px;">${iv.holdDesc}</div>
+
+      <div class="risk-warning">
+        <svg viewBox="0 0 16 16" fill="none"><path d="M8 1L1 14h14L8 1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 6v4M8 11.5v.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        <div class="risk-warning-text"><strong>False positive risk.</strong> ${iv.holdRisk}</div>
+      </div>
+
+      <div class="hold-field-label">Justification <span style="color:var(--red);">*</span></div>
+      <textarea class="hold-justify" id="holdJustify" placeholder="Why are you placing this hold? Reference specific evidence." oninput="updateHoldBtn()"></textarea>
+
+      <label class="hold-confirm-check">
+        <input type="checkbox" id="holdAck" onchange="updateHoldBtn()">
+        I have reviewed the evidence and accept responsibility for this hold. I understand that a wrongful hold may result in regulatory action against the institution.
+      </label>
+
+      <div class="btns" style="margin-top:0;">
+        <button class="btn btn-red" id="holdSubmitBtn" disabled style="opacity:0.4;cursor:not-allowed;" onclick="confirmHold('${matchId}')">
+          <svg viewBox="0 0 16 16" fill="none" style="width:14px;height:14px;"><path d="M8 2a4 4 0 00-4 4v2H3a1 1 0 00-1 1v5a1 1 0 001 1h10a1 1 0 001-1V9a1 1 0 00-1-1h-1V6a4 4 0 00-4-4zm-2 4a2 2 0 114 0v2H6V6z" fill="currentColor"/></svg>
+          Confirm hold
+        </button>
+        <button class="btn btn-g" onclick="closeEscalation()">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+
+function updateHoldBtn() {
+  const ack = document.getElementById('holdAck');
+  const justify = document.getElementById('holdJustify');
+  const btn = document.getElementById('holdSubmitBtn');
+  const ready = ack && ack.checked && justify && justify.value.trim().length > 10;
+  btn.disabled = !ready;
+  btn.style.opacity = ready ? '1' : '0.4';
+  btn.style.cursor = ready ? 'pointer' : 'not-allowed';
+}
+
+function confirmHold(matchId) {
+  const justify = document.getElementById('holdJustify');
+  if(!justify || justify.value.trim().length < 10) return;
+  holds[matchId] = { time: new Date().toISOString(), justification: justify.value.trim() };
+  closeEscalation();
+  buildInterventionStep();
+}
+
+function confirmEscalation() {
+  closeEscalation();
+  const confirmed = matchData.filter(m => verdicts[m.id]==='agree');
+  const dismissed = matchData.filter(m => verdicts[m.id]==='disagree');
+  const unreviewed = matchData.filter(m => verdicts[m.id]===null);
+  const active = [...confirmed,...unreviewed];
+
+  const now = new Date();
+  document.getElementById('auditTime').textContent = now.toISOString().replace('T',' ').slice(0,19)+' UTC';
+  document.getElementById('auditConfirmed').textContent = confirmed.length ? confirmed.map(m=>m.name).join(', ') : 'None explicitly confirmed';
+  document.getElementById('auditDismissed').textContent = dismissed.length ? dismissed.map(m=>m.name).join(', ') : 'None';
+  document.getElementById('auditExposure').textContent = '$'+Math.round((active.reduce((s,m)=>s+m.loss,0)+85000)/1000)+'K';
+  document.getElementById('auditHash').textContent = 'sha256:'+Array.from({length:16},()=>Math.floor(Math.random()*16).toString(16)).join('');
+
+  const holdEntries = Object.keys(holds);
+  const auditHoldsEl = document.getElementById('auditHolds');
+  if(holdEntries.length) {
+    const holdMatch = matchData.filter(m => holds[m.id]);
+    auditHoldsEl.style.display = 'block';
+    auditHoldsEl.innerHTML = `<div style="font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;">Transaction holds placed</div>` +
+      holdMatch.map(m => `<div style="font-size:11px;margin-bottom:6px;"><span style="font-weight:600;">${m.intervention.holdTarget}</span><br><span style="color:var(--ink2);">${holds[m.id].time.replace('T',' ').slice(0,19)} UTC — ${holds[m.id].justification}</span></div>`).join('');
+  } else { auditHoldsEl.style.display = 'none'; }
+
+  document.getElementById('auditSection').style.display = 'block';
+  document.getElementById('auditSection').scrollIntoView({behavior:'smooth'});
+}
+
+// --- 5. SIDE-BY-SIDE COMPARISON ---
+function showCompare(idx) {
+  hideAll();
+  document.getElementById('sCompare').classList.add('on');
+  const m = matchData[idx];
+  document.getElementById('compareTitle').textContent = `Margaret Chen vs. ${m.name}`;
+
+  const compare = m.compare;
+  const keys = Object.keys(compare);
+
+  const labels = {
+    contact:'Initial contact',deposits:'Deposit pattern',exchange:'Exchange used',wallet:'Wallet cluster',
+    timing:'Time window',intermediary:'Intermediary account',loginPattern:'Login behavior',returns:'Promise/lure',
+    accountChange:'Account change',stablecoin:'Stablecoin',narrative:'Narrative pattern',priorCrypto:'Prior crypto'
+  };
+
+  let srcRows = '', candRows = '';
+  keys.forEach(k => {
+    const c = compare[k];
+    const label = labels[k]||k;
+    const cls = c.match ? 'compare-highlight' : (c.src !== c.cand ? 'compare-diff' : 'compare-neutral');
+    srcRows += `<div class="compare-section"><div class="compare-section-title">${label}</div><div class="${cls}">${c.src}</div></div>`;
+    candRows += `<div class="compare-section"><div class="compare-section-title">${label}</div><div class="${cls}">${c.cand}</div></div>`;
+  });
+
+  const tierChip = m.tier==='strong' ? '<span class="chip chip-green" style="font-size:9px;"><span class="cd"></span>Strong evidence</span>'
+    : m.tier==='moderate' ? '<span class="chip chip-amber" style="font-size:9px;"><span class="cd"></span>Moderate evidence</span>'
+    : '<span class="chip" style="font-size:9px;background:var(--surface-hover);color:var(--ink3);border:1px solid var(--border)"><span class="cd"></span>Weak evidence</span>';
+
+  const summaryHtml = m.compareSummary ? `<div style="grid-column:1/-1;background:var(--accent-soft);border:1px solid var(--accent-border);border-radius:var(--r);padding:14px 18px;margin-bottom:8px;">
+    <div style="font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;">Kindred's assessment</div>
+    <div style="font-size:12px;line-height:1.6;color:var(--ink);">${m.compareSummary}</div>
+  </div>` : '';
+
+  document.getElementById('compareContent').innerHTML = `
+    ${summaryHtml}
+    <div class="compare-col">
+      <h3><span class="chip chip-accent" style="font-size:9px;">Source</span> Margaret Chen</h3>
+      <div class="dr" style="margin-bottom:8px;"><dt>Loss</dt><dd class="mono red">$85,000</dd><dt>Type</dt><dd>Pig butchering</dd><dt>Duration</dt><dd>8 weeks</dd></div>
+      ${srcRows}
+    </div>
+    <div class="compare-col">
+      <h3>${tierChip} ${m.name}</h3>
+      <div class="dr" style="margin-bottom:8px;"><dt>Loss</dt><dd class="mono red">${m.amt}</dd><dt>Status</dt><dd>${m.status}</dd></div>
+      ${candRows}
+    </div>
+  `;
+
+  document.querySelector('.main').scrollTop = 0;
+}
+
+// --- NETWORK GRAPH ---
+function drawNet() {
+  const c=document.getElementById('netGraph'); if(!c)return;
+  const dpr=window.devicePixelRatio||1, rect=c.getBoundingClientRect();
+  c.width=rect.width*dpr; c.height=rect.height*dpr;
+  const ctx=c.getContext('2d'); ctx.scale(dpr,dpr);
+  const w=rect.width, h=rect.height, cs=getComputedStyle(document.documentElement);
+  const ink=cs.getPropertyValue('--ink').trim(), ink3=cs.getPropertyValue('--ink3').trim();
+  const accent=cs.getPropertyValue('--accent').trim(), red=cs.getPropertyValue('--red').trim();
+  const amber=cs.getPropertyValue('--amber').trim(), border=cs.getPropertyValue('--border').trim();
+  const green=cs.getPropertyValue('--green').trim();
+  const cx=w/2, cy=h/2;
+
+  const active = matchData.filter(m => verdicts[m.id] !== 'disagree');
+  const nodes=[{x:cx,y:cy,r:24,label:'Margaret Chen',sub:'$85K',color:accent,tc:'#fff',src:true}];
+  const angles = [-2.3, -0.8, 0.4, 2.7];
+  active.forEach((m,i) => {
+    const a = angles[i] || i*0.8;
+    const dist = 120 + (i%2)*25;
+    const col = verdicts[m.id]==='agree' ? green : (m.tier==='strong'?amber:m.tier==='moderate'?amber:ink3);
+    nodes.push({x:cx+Math.cos(a)*dist, y:cy+Math.sin(a)*dist, r:16, label:m.name, sub:m.amt, color:col, tc:'#fff',
+      badge: verdicts[m.id]==='agree'?'✓': m.name.charAt(0)});
+  });
+
+  const wallets=[{x:cx-80,y:cy-10,label:'Wallet cluster A'},{x:cx+5,y:cy-65,label:'US Exchange'},{x:cx+80,y:cy+15,label:'SE Asian Exchange'}];
+
+  nodes.forEach((n,i) => { if(i===0) return;
+    ctx.beginPath(); ctx.moveTo(nodes[0].x,nodes[0].y); ctx.lineTo(n.x,n.y);
+    ctx.strokeStyle=accent; ctx.globalAlpha=0.3; ctx.lineWidth=2; ctx.stroke(); ctx.globalAlpha=1;
+  });
+  wallets.forEach(wl=>{
+    nodes.forEach(n=>{
+      const d=Math.hypot(n.x-wl.x,n.y-wl.y);
+      if(d<200){ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(wl.x,wl.y);ctx.strokeStyle=border;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);}
+    });
+  });
+  wallets.forEach(wl=>{ctx.beginPath();ctx.arc(wl.x,wl.y,4,0,Math.PI*2);ctx.fillStyle=border;ctx.fill();ctx.font='9px system-ui,sans-serif';ctx.fillStyle=ink3;ctx.textAlign='center';ctx.fillText(wl.label,wl.x,wl.y+14);});
+  nodes.forEach(n=>{
+    ctx.beginPath();ctx.arc(n.x,n.y,n.r,0,Math.PI*2);ctx.fillStyle=n.color;ctx.fill();
+    if(n.src){ctx.beginPath();ctx.arc(n.x,n.y,n.r+3,0,Math.PI*2);ctx.strokeStyle=accent;ctx.lineWidth=2;ctx.stroke();}
+    ctx.font='bold 10px system-ui,sans-serif';ctx.fillStyle=ink;ctx.textAlign='center';ctx.fillText(n.label,n.x,n.y+n.r+14);
+    ctx.font='9px system-ui,sans-serif';ctx.fillStyle=ink3;ctx.fillText(n.sub,n.x,n.y+n.r+26);
+    if(n.badge){ctx.font='bold 9px system-ui,sans-serif';ctx.fillStyle=n.tc;ctx.fillText(n.badge,n.x,n.y+3.5);}
+    if(n.src){ctx.font='bold 8px system-ui,sans-serif';ctx.fillStyle=n.tc;ctx.fillText('SOURCE',n.x,n.y+3.5);}
+  });
+}
+window.addEventListener('resize',()=>{if(document.getElementById('s2').classList.contains('on'))drawNet();});
+</script>
+</body>
+</html>

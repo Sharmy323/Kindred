@@ -59,6 +59,31 @@ Good questions signal you understand the business. A few starters:
 - Who is the primary user you optimize for — the compliance analyst, the investigator, or
   the customer's leadership buying the platform?
 
+## Recruiter guidance on what the panel focuses on
+
+**Panel:** Maggie, Adam, an Account Director, and a PMM — not a pure product panel. Brief and
+prototype need to land with sales/marketing readers too, not just PMs.
+
+- **They weight process over polish.** Panel scores *how you reason* — tradeoffs weighed, why
+  you cut what you cut, how you adapt to the live constraint — more than whether the final
+  artifact looks impressive. Narrate thinking out loud constantly, including uncertainty, rather
+  than presenting only conclusions.
+- **They respond well to customer-centric, concrete examples** over abstract frameworks — ground
+  claims in a specific customer moment, not a generalized lesson.
+- **Avoid shipping stories measured in quarters.** TRM's culture pitch is "ship in days, not
+  sprints" — a quarter-long story reads as the opposite of what they want, even with a good
+  outcome. If it's the best story available, reframe around the fastest sub-loop inside it (what
+  you decided and shipped in days), not the quarter as the unit.
+- **The live-iteration prompt was recently changed.** Don't rely on older versions of this
+  exercise circulating anywhere — prep for genuinely handling an unfamiliar curveball live, not
+  for a known scenario.
+- **Walkthrough should visibly hit these beats**, even unprompted: problem framing →
+  prioritization logic → success metrics → sales/PMM angle → AI usage specifically called out →
+  brief walkthrough → live iteration.
+- Separate values/behavioral interviews (senior sales folks) focus on ownership: what you built,
+  what you drove, times you owned the outcome end-to-end. Same STAR bank below applies — lead with
+  the specific situation, not the generalized takeaway.
+
 ## Pre-interview checklist
 
 - [ ] Read TRM's site + a recent blog post / report; note one thing to reference.

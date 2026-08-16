@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kindred-prototype",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd prototype && npx vite"],
+      "port": 5173,
+      "autoPort": true
+    }
+  ]
+}
